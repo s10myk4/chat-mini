@@ -5,7 +5,7 @@ import java.time.LocalDateTime
 final case class Message(id: MessageId, roomId: RoomId, sender: AccountId, body: String, createdAt: LocalDateTime)
 
 object Message {
-  def create(id: MessageId, roomId: RoomId, sender: AccountId, body: String): Message = {
+  def apply(id: MessageId, roomId: RoomId, sender: AccountId, body: String): Message = {
     ???
   }
 }
