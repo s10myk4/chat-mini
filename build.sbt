@@ -7,7 +7,7 @@ lazy val root = (project in file(".")).
       organization := "com.s10myk4",
       scalaVersion := "2.13.3"
     )),
-    name := "chatwork-mini",
+    name := "chat-mini",
     version := "1.0",
     scalacOptions in Compile ++= Seq("-deprecation", "-feature", "-unchecked", "-Xlog-reflective-calls", "-Xlint"),
     libraryDependencies ++= Seq(
