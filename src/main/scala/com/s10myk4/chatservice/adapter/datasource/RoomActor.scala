@@ -1,13 +1,14 @@
 package com.s10myk4.chatservice.adapter.datasource
 
-import akka.actor.typed.{ActorSystem, Behavior}
+import akka.actor.typed.{ActorRef, ActorSystem, Behavior}
+import akka.cluster.sharding.typed.ShardingEnvelope
 import akka.cluster.sharding.typed.scaladsl.{ClusterSharding, Entity, EntityTypeKey}
 import akka.persistence.typed.PersistenceId
 import akka.persistence.typed.scaladsl.{Effect, EventSourcedBehavior}
 import com.s10myk4.chatservice.application.usecase.RoomUseCase
 import com.s10myk4.chatservice.domain.{Message, Room}
 
-object RoomPersistentBehavior {
+object RoomActor {
 
   type Command = RoomUseCase.Command
 
@@ -25,15 +26,22 @@ object RoomPersistentBehavior {
 
   val entityKey: EntityTypeKey[Command] = EntityTypeKey[Command]("room")
 
-  def init(system: ActorSystem[_]): Unit = {
-    ClusterSharding(system).init(Entity(entityKey) { ctx =>
-      RoomPersistentBehavior(ctx.entityId)
-    }.withRole("room"))
+  def init(system: ActorSystem[_]): ActorRef[ShardingEnvelope[Command]] = {
+    ClusterSharding(system).init(
+      Entity(entityKey) { ctx =>
+        println(s"@@ entityId: ${ctx.entityId}")
+        RoomActor(ctx.entityId)
+      }
+    )
   }
 
+  private val separator = "_"
+
   def apply(roomId: String): Behavior[Command] = {
+    val id = PersistenceId(entityKey.name, roomId, separator)
+    println(s"@@ PersistenceId: ${id.id}")
     EventSourcedBehavior(
-      persistenceId = PersistenceId(entityKey.name, roomId),
+      persistenceId = id,
       emptyState = EmptyState,
       commandHandler = commandHandler(),
       eventHandler = eventHandler
@@ -56,10 +64,9 @@ object RoomPersistentBehavior {
 
   private val eventHandler: (State, Event) => State = { (state, event) =>
     (state, event) match {
-      case (EmptyState, CreatedRoom(room)) => {
+      case (EmptyState, CreatedRoom(room)) =>
         println("@@ CreateRoom Event")
         JustState(room)
-      }
       case (JustState(state), PostedMessage(message)) => JustState(state.postMessage(message))
       case _ => throw new IllegalStateException(s"unexpected event [$event] in state [$state]")
     }
