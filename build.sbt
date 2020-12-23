@@ -1,15 +1,10 @@
 lazy val akkaHttpVersion = "10.2.2"
 lazy val akkaVersion = "2.6.10"
 
-lazy val root = (project in file(".")).
-  settings(
-    inThisBuild(List(
-      organization := "com.s10myk4",
-      scalaVersion := "2.13.3"
-    )),
-    name := "chat-mini",
-    version := "1.0",
-    scalacOptions in Compile ++= Seq("-deprecation", "-feature", "-unchecked", "-Xlog-reflective-calls", "-Xlint"),
+lazy val `write-api-server` = (project in file("write-api-server"))
+  .settings(BaseSettings())
+  .settings(
+    name := "write-api-server",
     libraryDependencies ++= Seq(
       "com.typesafe.akka" %% "akka-http" % akkaHttpVersion,
       "com.typesafe.akka" %% "akka-http-spray-json" % akkaHttpVersion,
@@ -18,6 +13,7 @@ lazy val root = (project in file(".")).
       "com.typesafe.akka" %% "akka-stream" % akkaVersion,
       "com.typesafe.akka" %% "akka-persistence-typed" % akkaVersion,
       "com.typesafe.akka" %% "akka-serialization-jackson" % akkaVersion,
+      "com.github.j5ik2o" %% "akka-persistence-kafka" % "1.0.14",
       "com.typesafe.akka" %% "akka-slf4j" % akkaVersion,
       "ch.qos.logback" % "logback-classic" % "1.2.3",
 
@@ -28,3 +24,9 @@ lazy val root = (project in file(".")).
       "com.typesafe.akka" %% "akka-stream-testkit" % akkaVersion % Test,
     )
   )
+
+val root = (project in file("."))
+  .settings(BaseSettings())
+  .settings(name := "chat-mini")
+  .aggregate(`write-api-server`)
+
