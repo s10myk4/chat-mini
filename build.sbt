@@ -25,8 +25,11 @@ lazy val `write-api-server` = (project in file("write-api-server"))
     )
   )
 
+lazy val `read-api-server` = (project in file("read-api-server"))
+  .settings(name := "read-api-server")
+
 val root = (project in file("."))
   .settings(BaseSettings())
   .settings(name := "chat-mini")
-  .aggregate(`write-api-server`)
+  .aggregate(`write-api-server`, `read-api-server`)
 
