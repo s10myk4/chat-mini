@@ -6,6 +6,6 @@ final case class Message(id: MessageId, roomId: RoomId, sender: AccountId, body:
 
 object Message {
   def apply(id: MessageId, roomId: RoomId, sender: AccountId, body: String): Message = {
-    ???
+    new Message(id, roomId, sender, body, LocalDateTime.now())
   }
 }
