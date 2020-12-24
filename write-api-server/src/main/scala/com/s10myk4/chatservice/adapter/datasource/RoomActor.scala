@@ -6,12 +6,16 @@ import akka.cluster.sharding.typed.scaladsl.{ClusterSharding, Entity, EntityType
 import akka.persistence.typed.PersistenceId
 import akka.persistence.typed.scaladsl.{Effect, EventSourcedBehavior}
 import com.s10myk4.chatservice.application.usecase.RoomUseCase
-import com.s10myk4.chatservice.application.usecase.RoomUseCase.{CreateRoom, PostMessage}
+import com.s10myk4.chatservice.application.usecase.RoomUseCase.RoomUseCaseResult
 import com.s10myk4.chatservice.domain.{Message, Room}
 
 object RoomActor {
 
-  type Command = RoomUseCase.Command
+  sealed trait Command extends CborSerializable
+
+  final case class PostMessage(message: Message, replyTo: ActorRef[RoomUseCaseResult]) extends Command
+
+  final case class CreateRoom(room: Room, replyTo: ActorRef[RoomUseCaseResult]) extends Command
 
   sealed trait Event extends CborSerializable
 

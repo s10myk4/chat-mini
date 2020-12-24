@@ -5,13 +5,16 @@ import akka.cluster.sharding.typed.ShardingEnvelope
 import akka.cluster.sharding.typed.scaladsl.{ClusterSharding, Entity, EntityTypeKey}
 import akka.persistence.typed.PersistenceId
 import akka.persistence.typed.scaladsl.{Effect, EventSourcedBehavior}
-import com.s10myk4.chatservice.application.usecase.AccountUseCase
-import com.s10myk4.chatservice.application.usecase.AccountUseCase.{CreateAccount, Valid}
-import com.s10myk4.chatservice.domain.Account
+import com.s10myk4.chatservice.application.usecase.AccountUseCase.{AccountUseCaseResult, AlreadyExistAccount, Valid}
+import com.s10myk4.chatservice.domain.{Account, AccountId}
 
 object AccountActor {
 
-  type Command = AccountUseCase.Command
+  sealed trait Command extends CborSerializable
+
+  final case class CreateAccount(account: Account, replyTo: ActorRef[AccountUseCaseResult]) extends Command
+
+  final case class IsExist[T](id: AccountId, replyTo: ActorRef[T]) extends Command
 
   sealed trait Event extends CborSerializable
 
@@ -46,7 +49,7 @@ object AccountActor {
         println("@@ handle CreateAccount Command")
         Effect.persist(CreatedAccount(account)).thenReply(replyTo)(_ => Valid)
       case (JustState(_), CreateAccount(account, replyTo)) =>
-        Effect.reply(replyTo)(AccountUseCase.AlreadyExistAccount(account.id))
+        Effect.reply(replyTo)(AlreadyExistAccount(account.id))
       case _ =>
         Effect.unhandled
     }
@@ -60,6 +63,5 @@ object AccountActor {
       case _ => throw new IllegalStateException(s"unexpected event [$event] in state [$state]")
     }
   }
-
 
 }

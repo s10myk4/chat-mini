@@ -45,7 +45,6 @@ object Main {
     import system.executionContext
 
     implicit val timeout = Timeout.create(system.settings.config.getDuration("chat-service.ask-timeout"))
-    implicit val sc = system.scheduler
 
     RoomActor.init(system)
     val clusterSharding = ClusterSharding(system)
@@ -68,7 +67,7 @@ object Main {
       .onComplete {
         case Success(binding) =>
           val address = binding.localAddress
-          system.log.info("Shopping online at http://{}:{}/", address.getHostString, address.getPort)
+          system.log.info("Start server http://{}:{}/", address.getHostString, address.getPort)
         case Failure(ex) =>
           system.log.error("Failed to bind HTTP endpoint, terminating system", ex)
           system.terminate()
