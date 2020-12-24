@@ -8,7 +8,7 @@ import akka.util.Timeout
 import com.s10myk4.chatservice.adapter.datasource.RoomActor
 import com.s10myk4.chatservice.adapter.http.ChatServiceRoutes
 import com.s10myk4.chatservice.application.support.SimpleIdGenerator
-import com.s10myk4.chatservice.application.usecase.RoomUseCase
+import com.s10myk4.chatservice.application.usecase.{AccountUseCase, RoomUseCase}
 import com.typesafe.config.{Config, ConfigFactory}
 
 import scala.concurrent.duration.DurationInt
@@ -25,13 +25,14 @@ object Main {
         ActorSystem[Nothing](setUp("localhost", httpPort), "ChatService", config(port, httpPort))
       case None =>
         ActorSystem[Nothing](setUp("localhost", 9000), "ChatService", config(2551, 9000))
-        //throw new IllegalArgumentException("port number, or cassandra required argument")
+      //throw new IllegalArgumentException("port number, or cassandra required argument")
     }
   }
 
   private def config(port: Int, httpPort: Int): Config = {
     println(s"@@ port: $port / htpPort: $httpPort")
-    ConfigFactory.parseString(s"""
+    ConfigFactory.parseString(
+      s"""
       akka.remote.artery.canonical.port = $port
       chat-service.http.port = $httpPort
        """).withFallback(ConfigFactory.load())
@@ -40,21 +41,23 @@ object Main {
   import akka.actor.typed.scaladsl._
 
   private def setUp(host: String, port: Int): Behavior[Nothing] = Behaviors.setup[Nothing] { context =>
-      implicit val system = context.system
-      import system.executionContext
+    implicit val system = context.system
+    import system.executionContext
 
-      implicit val timeout = Timeout.create(system.settings.config.getDuration("chat-service.ask-timeout"))
-      implicit val sc = system.scheduler
+    implicit val timeout = Timeout.create(system.settings.config.getDuration("chat-service.ask-timeout"))
+    implicit val sc = system.scheduler
 
-      val shardRegion = RoomActor.init(system)
+    RoomActor.init(system)
+    val clusterSharding = ClusterSharding(system)
 
-      val idGen = new SimpleIdGenerator
-      val useCase = new RoomUseCase(ClusterSharding(system))
-      val routes = new ChatServiceRoutes(idGen, useCase)
+    val idGen = new SimpleIdGenerator
+    val roomUseCase = new RoomUseCase(idGen, clusterSharding)
+    val accountUseCase = new AccountUseCase(idGen, clusterSharding)
+    val routes = new ChatServiceRoutes(roomUseCase, accountUseCase)
 
-      startHttpServer(routes.topLevel, host, port)(system)
-      Behaviors.empty
-    }
+    startHttpServer(routes.topLevel, host, port)(system)
+    Behaviors.empty
+  }
 
 
   private def startHttpServer(routes: Route, host: String, port: Int)(implicit system: ActorSystem[_]): Unit = {

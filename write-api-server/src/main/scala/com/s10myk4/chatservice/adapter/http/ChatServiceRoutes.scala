@@ -6,11 +6,9 @@ import akka.http.scaladsl.model.StatusCodes
 import akka.http.scaladsl.server.Directives._
 import akka.http.scaladsl.server.Route
 import akka.util.Timeout
-import com.s10myk4.chatservice.application.support.IdGenerator
 import com.s10myk4.chatservice.application.usecase.AccountUseCase.input.CreateAccountRequest
 import com.s10myk4.chatservice.application.usecase.RoomUseCase.input.{CreateRoomRequest, PostMessageRequest}
 import com.s10myk4.chatservice.application.usecase.{AccountUseCase, RoomUseCase}
-import com.s10myk4.chatservice.domain._
 import spray.json.DefaultJsonProtocol
 
 object ChatServiceRoutes {
@@ -23,7 +21,6 @@ object ChatServiceRoutes {
 }
 
 class ChatServiceRoutes(
-                         idGen: IdGenerator[Long],
                          roomUseCase: RoomUseCase,
                          accountUseCase: AccountUseCase,
                        )(implicit system: ActorSystem[_], timeout: Timeout) extends SprayJsonSupport {
@@ -36,8 +33,7 @@ class ChatServiceRoutes(
         post {
           entity(as[CreateAccountRequest]) { in =>
             import AccountUseCase._
-            val id = idGen.generate()
-            onSuccess(accountUseCase.createAccount(in.toEntity(id))) {
+            onSuccess(accountUseCase.createAccount(in)) {
               case Valid =>
                 complete(StatusCodes.Created)
               case err: AlreadyExistAccount =>
@@ -54,8 +50,7 @@ class ChatServiceRoutes(
         post {
           entity(as[PostMessageRequest]) { in =>
             import RoomUseCase._
-            val id = idGen.generate()
-            onSuccess(roomUseCase.postMessage(RoomId(in.roomId), in.toEntity(id))) {
+            onSuccess(roomUseCase.postMessage(in)) {
               case Valid =>
                 complete(StatusCodes.Created)
               case err: DoesNotExistSender =>
@@ -72,8 +67,7 @@ class ChatServiceRoutes(
         post {
           entity(as[CreateRoomRequest]) { in =>
             import RoomUseCase._
-            val id = idGen.generate()
-            val res = roomUseCase.createRoom(in.toEntity(id))
+            val res = roomUseCase.createRoom(in)
             onSuccess(res) {
               case Valid =>
                 complete(StatusCodes.Created)
