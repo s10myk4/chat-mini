@@ -6,6 +6,7 @@ import akka.cluster.sharding.typed.scaladsl.{ClusterSharding, Entity, EntityType
 import akka.persistence.typed.PersistenceId
 import akka.persistence.typed.scaladsl.{Effect, EventSourcedBehavior}
 import com.s10myk4.chatservice.application.usecase.RoomUseCase
+import com.s10myk4.chatservice.application.usecase.RoomUseCase.{CreateRoom, PostMessage}
 import com.s10myk4.chatservice.domain.{Message, Room}
 
 object RoomActor {
@@ -50,13 +51,18 @@ object RoomActor {
 
   private def commandHandler(): (State, Command) => Effect[Event, State] = { (state, command) =>
     (state, command) match {
-      case (EmptyState, cmd: RoomUseCase.CreateRoom) =>
+      case (EmptyState, cmd: CreateRoom) =>
         Effect.persist(CreatedRoom(cmd.room)).thenReply(cmd.replyTo) { _ =>
           println(s"@@ persistent command ${cmd.room}")
           RoomUseCase.Valid
         }
-      case (JustState(_), cmd: RoomUseCase.PostMessage) =>
-        Effect.persist(PostedMessage(cmd.message))
+      case (EmptyState, PostMessage(msg, replyTo)) =>
+        Effect.reply(replyTo)(RoomUseCase.DoesNotExistRoom(msg.roomId))
+      case (JustState(_), CreateRoom(room, replyTo)) =>
+        Effect.reply(replyTo)(RoomUseCase.AlreadyExistRoom(room.id))
+      //case (JustState(state), PostMessage(msg, _)) => //TODO 対象の投稿者が存在するか
+      case (JustState(_), PostMessage(msg, _)) =>
+        Effect.persist(PostedMessage(msg))
       case _ =>
         Effect.unhandled
     }
@@ -67,7 +73,8 @@ object RoomActor {
       case (EmptyState, CreatedRoom(room)) =>
         println("@@ CreateRoom Event")
         JustState(room)
-      case (JustState(state), PostedMessage(message)) => JustState(state.postMessage(message))
+      case (JustState(state), PostedMessage(message)) =>
+        JustState(state.postMessage(message))
       case _ => throw new IllegalStateException(s"unexpected event [$event] in state [$state]")
     }
   }
