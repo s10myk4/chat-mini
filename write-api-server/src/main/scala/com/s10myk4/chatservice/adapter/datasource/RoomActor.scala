@@ -56,10 +56,7 @@ object RoomActor {
   private def commandHandler(): (State, Command) => Effect[Event, State] = { (state, command) =>
     (state, command) match {
       case (EmptyState, cmd: CreateRoom) =>
-        Effect.persist(CreatedRoom(cmd.room)).thenReply(cmd.replyTo) { _ =>
-          println(s"@@ persistent command ${cmd.room}")
-          RoomUseCase.Valid
-        }
+        Effect.persist(CreatedRoom(cmd.room)).thenReply(cmd.replyTo)(_ =>RoomUseCase.Valid)
       case (EmptyState, PostMessage(msg, replyTo)) =>
         Effect.reply(replyTo)(RoomUseCase.DoesNotExistRoom(msg.roomId))
       case (JustState(_), CreateRoom(room, replyTo)) =>

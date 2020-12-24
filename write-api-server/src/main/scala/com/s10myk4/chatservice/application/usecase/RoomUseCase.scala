@@ -2,15 +2,15 @@ package com.s10myk4.chatservice.application.usecase
 
 import akka.cluster.sharding.typed.scaladsl.ClusterSharding
 import akka.util.Timeout
-import com.s10myk4.chatservice.adapter.datasource.{AccountActor, RoomActor}
 import com.s10myk4.chatservice.adapter.datasource.RoomActor.{CreateRoom, PostMessage}
+import com.s10myk4.chatservice.adapter.datasource.{AccountActor, RoomActor}
 import com.s10myk4.chatservice.application.support.IdGenerator
 import com.s10myk4.chatservice.application.usecase.RoomUseCase.RoomUseCaseResult
 import com.s10myk4.chatservice.application.usecase.RoomUseCase.input.{CreateRoomRequest, PostMessageRequest}
 import com.s10myk4.chatservice.application.usecase.UseCaseResult._
 import com.s10myk4.chatservice.domain._
 
-import scala.concurrent.{ExecutionContext, Future}
+import scala.concurrent.Future
 
 object RoomUseCase {
 
