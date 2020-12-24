@@ -6,7 +6,7 @@ import akka.http.scaladsl.Http
 import akka.http.scaladsl.server.Route
 import akka.util.Timeout
 import com.s10myk4.chatservice.adapter.datasource.RoomActor
-import com.s10myk4.chatservice.adapter.http.ChatServiceRoutes
+import com.s10myk4.chatservice.adapter.http.WriteApiServerRoutes
 import com.s10myk4.chatservice.application.support.SimpleIdGenerator
 import com.s10myk4.chatservice.application.usecase.{AccountUseCase, RoomUseCase}
 import com.typesafe.config.{Config, ConfigFactory}
@@ -52,7 +52,7 @@ object Main {
     val idGen = new SimpleIdGenerator
     val roomUseCase = new RoomUseCase(idGen, clusterSharding)
     val accountUseCase = new AccountUseCase(idGen, clusterSharding)
-    val routes = new ChatServiceRoutes(roomUseCase, accountUseCase)
+    val routes = new WriteApiServerRoutes(roomUseCase, accountUseCase)
 
     startHttpServer(routes.topLevel, host, port)(system)
     Behaviors.empty

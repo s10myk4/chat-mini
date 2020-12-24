@@ -5,6 +5,7 @@ lazy val `write-api-server` = (project in file("write-api-server"))
   .settings(BaseSettings())
   .settings(
     name := "write-api-server",
+    mainClass in(Compile, run) := Some("com.s10myk4.chatservice.Main"),
     libraryDependencies ++= Seq(
       "com.typesafe.akka" %% "akka-http" % akkaHttpVersion,
       "com.typesafe.akka" %% "akka-http-spray-json" % akkaHttpVersion,
