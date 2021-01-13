@@ -3,21 +3,6 @@ import sbt.Keys.mainClass
 lazy val akkaHttpVersion = "10.2.2"
 lazy val akkaVersion = "2.6.10"
 
-lazy val `domain-event-router` = (project in file("domain-event-router"))
-  .settings(BaseSettings())
-  .settings(
-    name := "domain-event-router",
-    //mainClass in(Compile, run) := Some("com.s10myk4.chatservice.Main"),
-    libraryDependencies ++= Seq(
-      "com.typesafe.akka" %% "akka-actor-typed" % akkaVersion,
-      "com.typesafe.akka" %% "akka-stream" % akkaVersion,
-      "com.typesafe.akka" %% "akka-serialization-jackson" % akkaVersion,
-      "com.typesafe.akka" %% "akka-stream-kafka" % "2.0.6",
-      "com.amazonaws" % "aws-java-sdk-dynamodb" % "1.11.935",
-      "com.amazonaws" % "dynamodb-streams-kinesis-adapter" % "1.5.2"
-    )
-  )
-
 lazy val `write-api-server` = (project in file("write-api-server"))
   .settings(BaseSettings())
   .settings(
