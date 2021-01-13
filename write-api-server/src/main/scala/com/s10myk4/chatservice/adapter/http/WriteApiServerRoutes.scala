@@ -19,9 +19,9 @@ object WriteApiServerRoutes {
 }
 
 class WriteApiServerRoutes(
-                         roomUseCase: RoomUseCase,
-                         accountUseCase: AccountUseCase,
-                       ) extends SprayJsonSupport {
+                            roomUseCase: RoomUseCase,
+                            accountUseCase: AccountUseCase,
+                          ) extends SprayJsonSupport {
 
   import WriteApiServerRoutes._
 
@@ -72,6 +72,8 @@ class WriteApiServerRoutes(
               complete(StatusCodes.BadRequest -> err.message)
             case err: InvalidPermission =>
               complete(StatusCodes.BadRequest -> err.message)
+            case _ =>
+              complete(StatusCodes.InternalServerError)
           }
         }
       }

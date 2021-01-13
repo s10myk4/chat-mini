@@ -1,16 +1,17 @@
 package com.s10myk4.chatservice.application.usecase
 
-import akka.cluster.sharding.typed.scaladsl.ClusterSharding
+import akka.actor.typed.scaladsl.AskPattern.Askable
+import akka.actor.typed.{ActorRef, Scheduler}
 import akka.util.Timeout
-import com.s10myk4.chatservice.adapter.datasource.AccountActor
-import com.s10myk4.chatservice.adapter.datasource.AccountActor.CreateAccount
+import com.s10myk4.chatservice.adapter.datasource.account.AccountPersistentActor
+import com.s10myk4.chatservice.adapter.datasource.account.AccountPersistentActor.CreateAccount
 import com.s10myk4.chatservice.application.support.IdGenerator
 import com.s10myk4.chatservice.application.usecase.AccountUseCase.AccountUseCaseResult
 import com.s10myk4.chatservice.application.usecase.AccountUseCase.input.CreateAccountRequest
 import com.s10myk4.chatservice.application.usecase.UseCaseResult.{UseCaseInvalid, UseCaseValid}
 import com.s10myk4.chatservice.domain.{Account, AccountId, Member}
 
-import scala.concurrent.{ExecutionContext, Future}
+import scala.concurrent.Future
 
 object AccountUseCase {
 
@@ -43,16 +44,13 @@ object AccountUseCase {
 
 class AccountUseCase(
                       idGen: IdGenerator[Long],
-                      sharding: ClusterSharding
-                    )(implicit ex: ExecutionContext, timeout: Timeout) {
+                      accountRef: ActorRef[AccountPersistentActor.Command]
+                    )(implicit timeout: Timeout, scheduler: Scheduler) {
 
   def createAccount(in: CreateAccountRequest): Future[AccountUseCaseResult] = {
     in.toEntity(idGen.generate()).fold(
       left => Future.successful(left),
-      account => {
-        val ref = sharding.entityRefFor(AccountActor.entityKey, account.id.value.toString)
-        ref.ask(CreateAccount(account, _))
-      }
+      account => accountRef.ask(CreateAccount(account, _))
     )
   }
 
