@@ -34,7 +34,7 @@ class WriteApiServerRoutes(
             complete(StatusCodes.Created)
           case err: AlreadyExistRoom =>
             complete(StatusCodes.BadRequest -> err.message)
-          case err: DoesNotExistSender =>
+          case err: SenderIsNotMemberOfRoom =>
             complete(StatusCodes.BadRequest -> err.message)
           case err: DoesNotExistRoom =>
             complete(StatusCodes.BadRequest -> err.message)
