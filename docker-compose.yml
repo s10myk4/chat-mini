@@ -1,23 +1,72 @@
-version: '2.1'
+version: '3.8'
 services:
-  zookeeper:
-    image: wurstmeister/zookeeper:3.4.6
-    ports:
-      - "2181:2181"
-  kafka:
-    image: wurstmeister/kafka:2.12-2.2.1
-    ports:
-      - "9092:9092"
-    depends_on:
-      - zookeeper
+  dynamodb:
+    image: amazon/dynamodb-local
     environment:
-      KAFKA_ADVERTISED_HOST_NAME: "localhost"
-      KAFKA_ADVERTISED_PORT: "9092"
-      #KAFKA_ADVERTISED_LISTENERS: "PLAINTEXT://kafka:9092"
-      HOSTNAME_COMMAND: "route -n | awk '/UG[ \t]/{print $$2}'"
-      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
-      LOG4J_LOGGER_KAFKA: "INFO"
-      #https://github.com/wurstmeister/kafka-docker#automatically-create-topics
-      KAFKA_CREATE_TOPICS: "room:1:1"
-    volumes:
-      - /var/run/docker.sock:/var/run/docker.sock
+      DYNAMO_ENDPOINT: "http://localhost:8000"
+    #image: instructure/dynamo-local-admin
+    ports:
+      - "8000:8000"
+    #command: -jar DynamoDBLocal.jar -dbPath /data
+    command: -jar DynamoDBLocal.jar -inMemory -sharedDb
+    #volumes:
+    #  - $PWD/data:/data
+  #zookeeper:
+  #  image: wurstmeister/zookeeper:3.4.6
+  #  ports:
+  #    - "2181:2181"
+  #kafka:
+  #  image: wurstmeister/kafka:2.12-2.2.1
+  #  ports:
+  #    - "9092:9092"
+  #  depends_on:
+  #    - zookeeper
+  #  environment:
+  #    KAFKA_ADVERTISED_HOST_NAME: "localhost"
+  #    KAFKA_ADVERTISED_PORT: "9092"
+  #    #KAFKA_ADVERTISED_LISTENERS: "PLAINTEXT://kafka:9092"
+  #    HOSTNAME_COMMAND: "route -n | awk '/UG[ \t]/{print $$2}'"
+  #    KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+  #    LOG4J_LOGGER_KAFKA: "INFO"
+  #    #https://github.com/wurstmeister/kafka-docker#automatically-create-topics
+  #    KAFKA_CREATE_TOPICS: "room:1:1"
+  #  volumes:
+  #    - /var/run/docker.sock:/var/run/docker.sock
+  #flink-sql-client:
+  #  image: flink-sql-client
+  #  build: ./flink/sql-client
+  #  #command: "java -classpath /opt/data/data-producer.jar com.ververica.sql_training.data_producer.TaxiRecordProducer --input file /opt/data --output kafka kafka:9092 --speedup 1.0"
+  #  command: "sleep 5000"
+  #  depends_on:
+  #    - kafka
+  #    - jobmanager
+  #  environment:
+  #    FLINK_JOBMANAGER_HOST: jobmanager
+  #    ZOOKEEPER_CONNECT: zookeeper
+  #    KAFKA_BOOTSTRAP: kafka
+  #jobmanager:
+  #  image: flink:1.11.3-scala_2.12
+  #  hostname: "jobmanager"
+  #  expose:
+  #    - "6123"
+  #  ports:
+  #    - "8081:8081"
+  #  command: jobmanager
+  #  environment:
+  #    - |
+  #      FLINK_PROPERTIES=
+  #      jobmanager.rpc.address: jobmanager
+  #taskmanager:
+  #  image: flink:1.11.3-scala_2.12
+  #  expose:
+  #    - "6121"
+  #    - "6122"
+  #  depends_on:
+  #    - jobmanager
+  #  command: taskmanager
+  #  #scale: 1
+  #  environment:
+  #    - |
+  #      FLINK_PROPERTIES=
+  #      jobmanager.rpc.address: jobmanager
+  #    #taskmanager.numberOfTaskSlots: 2

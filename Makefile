@@ -76,3 +76,48 @@ flink/sql-cli: ## sql-cli
 
 zookeeper/broker-list: ## broker list
 	$(DC_CMD) zookeeper ./bin/zkCli.sh localhost:$(ZOOKEEPER_PORT) ls /brokers/ids
+
+DYNAMO_ENDPOINT := http://localhost:8000
+dynamodb/create-table: ## dynamodb/create-tables
+	aws --endpoint-url $(DYNAMO_ENDPOINT) dynamodb create-table --cli-input-json file://dynamodb/scripts/create-tables.json
+
+dynamodb/show-tables: ## dynamodb/show-tables
+	aws --endpoint-url $(DYNAMO_ENDPOINT) dynamodb list-tables
+
+dynamodb/scan-table: ## dynamodb/scan-table [TABLE_NAME]
+	aws --endpoint-url $(DYNAMO_ENDPOINT) dynamodb scan --table-name $(call args, )
+
+dynamodb/setup: ## dynamodb/setup
+	aws --endpoint-url=$(DYNAMO_ENDPOINT) dynamodb create-table \
+        --table-name journal \
+        --attribute-definitions \
+            AttributeName=par,AttributeType=S \
+            AttributeName=num,AttributeType=N \
+        --key-schema AttributeName=par,KeyType=HASH AttributeName=num,KeyType=RANGE \
+        --provisioned-throughput ReadCapacityUnits=1000,WriteCapacityUnits=1000
+	aws --endpoint-url=$(DYNAMO_ENDPOINT) dynamodb create-table \
+        --table-name snapshot \
+        --attribute-definitions \
+            AttributeName=par,AttributeType=S \
+            AttributeName=ts,AttributeType=N \
+        --key-schema \
+         	AttributeName=par,KeyType=HASH \
+         	AttributeName=ts,KeyType=RANGE \
+        --provisioned-throughput ReadCapacityUnits=1000,WriteCapacityUnits=1000 \
+		--local-secondary-indexes \
+        	IndexName=ts-idx,KeySchema=['{AttributeName=par,KeyType=HASH}','{AttributeName=ts,KeyType=RANGE}'],Projection={ProjectionType=ALL}
+
+POST_CONTENT := -X POST -H "Content-Type: application/json"
+BASE_URL := http://127.0.0.1:9000
+GET_HTTP_STATUS := -o /dev/null -w '%{http_code}\n' -s
+
+roomName = "default"
+post/room: ## post/room
+	curl $(POST_CONTENT) -d '{"name":"$(roomName)"}' $(BASE_URL)/room $(GET_HTTP_STATUS)
+
+roomId =
+post/message: ## post/message roomId=[ROOM_ID]
+	curl $(POST_CONTENT) -d '{"roomId":$(roomId),"sender":1,"body":"hogehoge"}' $(BASE_URL)/message $(GET_HTTP_STATUS)
+
+post/account: ## post/account
+	curl $(POST_CONTENT) -d '{"name": "shimomu"}' $(BASE_URL)/account $(GET_HTTP_STATUS)
