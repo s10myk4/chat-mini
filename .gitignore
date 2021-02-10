@@ -1,5 +1,7 @@
-*.class
-.idea
+.idea*
 target/
-.bsp
+.bsp/
+.bloop/
 data/*
+.sbt-version
+.scala-version
